@@ -25,31 +25,68 @@ function secondsToHms(seconds){
   return `${pad2(h)}:${pad2(m)}:${pad2(s)}`;
 }
 
-function extractArrivalStart(offText){
-  const match = offText.match(/arrivo\s*:\s*[^\n]*?(\d{1,2}:\d{2}:\d{2})(?::\d+)?/i);
-  if(!match) throw new Error("Orario di arrivo non trovato nella OFF.");
-  return match[1];
+function getTimes(text){
+  if(!text) return [];
+  return [...text.matchAll(/\b(\d{1,2}:\d{2}:\d{2})(?::\d+)?\b/g)].map(match => match[1]);
 }
 
-function extractNobileTime(nobileText){
-  const match = nobileText.match(/(\d{1,2}:\d{2}:\d{2})/);
-  if(!match) throw new Error("Orario del nobile non trovato.");
-  return match[1];
+function extractSmartTime(text){
+  if(!text || !text.trim()) return null;
+
+  // Caso completo: "arrivo: 14,2026 20:40:10:257"
+  let match = text.match(/arrivo\s*:\s*[^\n]*?(\d{1,2}:\d{2}:\d{2})(?::\d+)?/i);
+  if(match) return match[1];
+
+  // Caso con virgola: prende il primo orario dopo la virgola.
+  const commaIndex = text.indexOf(",");
+  if(commaIndex !== -1){
+    const afterComma = text.slice(commaIndex + 1);
+    const afterCommaTimes = getTimes(afterComma);
+    if(afterCommaTimes.length) return afterCommaTimes[0];
+  }
+
+  // Caso semplice: "sent 20:45:44" oppure "oggi alle 20:50:43".
+  const times = getTimes(text);
+  if(times.length) return times[0];
+
+  return null;
+}
+
+function resolveTimes(offText, nobileText){
+  const offTime = extractSmartTime(offText);
+  const nobileTime = extractSmartTime(nobileText);
+
+  if(offTime || nobileTime){
+    return { startHms: offTime || nobileTime, endHms: nobileTime || null };
+  }
+
+  // Se l'utente incolla tutto in un solo campo senza "arrivo", prova a usare primo e ultimo orario.
+  const combinedTimes = [...getTimes(offText), ...getTimes(nobileText)];
+  if(combinedTimes.length >= 2){
+    return { startHms: combinedTimes[0], endHms: combinedTimes[combinedTimes.length - 1] };
+  }
+
+  throw new Error("Inserisci almeno un orario nella OFF o nel Nobile.");
+}
+
+function formatRange(startSeconds, endSeconds){
+  const start = secondsToHms(startSeconds);
+  if(endSeconds === null || endSeconds === undefined) return start;
+  return `${start} - ${secondsToHms(endSeconds)}`;
 }
 
 function buildOutput(offText, nobileText){
-  const startHms = extractArrivalStart(offText);
-  const endHms = extractNobileTime(nobileText);
+  const { startHms, endHms } = resolveTimes(offText, nobileText);
   const start = hmsToSeconds(startHms);
-  const end = hmsToSeconds(endHms);
+  const end = endHms ? hmsToSeconds(endHms) : null;
 
-  const lines = [`[b]Arrivo:  ${secondsToHms(start)} - ${secondsToHms(end)}[/b]`];
+  const lines = [`[b]Arrivo:  ${formatRange(start, end)}[/b]`];
 
   for(const unit of UNITS){
     const travel = hmsToSeconds(unit.travel);
-    const from = secondsToHms(start - travel);
-    const to = secondsToHms(end - travel);
-    lines.push(`${unit.label} [unit]${unit.tag}[/unit] ${from} - ${to}`);
+    const from = start - travel;
+    const to = end === null ? null : end - travel;
+    lines.push(`${unit.label} [unit]${unit.tag}[/unit] ${formatRange(from, to)}`);
   }
 
   return lines.join("\n");

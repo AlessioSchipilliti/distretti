@@ -11,13 +11,30 @@
     <section class="card">
       <h1>Calcolo distretti</h1>
       <p class="muted">Inserisci OFF, Nobile o entrambi. Basta almeno un orario. Il risultato è pronto da copiare.</p>
+	<label for="offInput">OFF</label>
+	<textarea
+  id="offInput"
+  class="input yellow"
+  rows="3"
+  spellcheck="false"
+  autocomplete="off"
+  autocorrect="off"
+  autocapitalize="off"
+  placeholder="Incolla OFF..."
+	></textarea>
 
-      <label for="offInput">OFF</label>
-      <textarea id="offInput" class="input yellow" rows="3" spellcheck="false"></textarea>
-
-      <label for="nobileInput">Nobile</label>
-      <input id="nobileInput" class="input yellow" type="text" value="" spellcheck="false" />
-
+	<label for="nobileInput">Nobile</label>
+	<input
+  id="nobileInput"
+  class="input yellow"
+  type="text"
+  value=""
+  spellcheck="false"
+  autocomplete="off"
+  autocorrect="off"
+  autocapitalize="off"
+  placeholder="Incolla Nobile..."
+	/>
       <div class="actions">
         <button id="calcBtn" type="button">Calcola</button>
         <button id="copyBtn" type="button">Copia risultato</button>

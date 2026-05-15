@@ -116,5 +116,3 @@ document.getElementById("calcBtn").addEventListener("click", calculate);
 document.getElementById("copyBtn").addEventListener("click", copyResult);
 document.getElementById("offInput").addEventListener("input", calculate);
 document.getElementById("nobileInput").addEventListener("input", calculate);
-
-calculate();

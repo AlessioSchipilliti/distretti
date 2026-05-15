@@ -33,23 +33,19 @@ function getTimes(text){
 function extractSmartTime(text){
   if(!text || !text.trim()) return null;
 
-  // Caso completo: "arrivo: 14,2026 20:40:10:257"
-  let match = text.match(/arrivo\s*:\s*[^\n]*?(\d{1,2}:\d{2}:\d{2})(?::\d+)?/i);
-  if(match) return match[1];
+  const times = getTimes(text);
+  if(!times.length) return null;
 
-  // Caso con virgola: prende il primo orario dopo la virgola.
-  const commaIndex = text.indexOf(",");
-  if(commaIndex !== -1){
-    const afterComma = text.slice(commaIndex + 1);
-    const afterCommaTimes = getTimes(afterComma);
-    if(afterCommaTimes.length) return afterCommaTimes[0];
+  // Se esiste "arrivo", prendi l'orario dopo arrivo.
+  const arrivoPart = text.split(/arrivo\s*:/i)[1];
+  if(arrivoPart){
+    const arrivoTimes = getTimes(arrivoPart);
+    if(arrivoTimes.length) return arrivoTimes[0];
   }
 
-  // Caso semplice: "sent 20:45:44" oppure "oggi alle 20:50:43".
-  const times = getTimes(text);
-  if(times.length) return times[0];
-
-  return null;
+  // Caso semplice: "oggi alle 20:50:43" oppure "sent 20:45:44".
+  // Prende il primo orario trovato, senza cercare virgole.
+  return times[0];
 }
 
 function resolveTimes(offText, nobileText){
